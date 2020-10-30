@@ -8,7 +8,7 @@
     <title>图文组合</title>
     <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.2.0/css/bootstrap.min.css">
     <script src="https://cdn.bootcss.com/jquery/2.1.4/jquery.min.js"></script>
-    <script src="https://maxmon.top/js/vconsole.min.js"></script>
+    <!-- <script src="https://maxmon.top/js/vconsole.min.js"></script> -->
     <script src="https://maxmon.top/visit?code=card"></script>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;" name="viewport" />
     <style>
@@ -112,7 +112,7 @@
         }
 
         .canvas-out {
-            width: 236px;
+            /* width: 236px; */
             height: 338px;
             margin-bottom: 10px;
             border: 2px dashed #ccc;
@@ -137,7 +137,7 @@
             }
 
             .canvas-out {
-                width: 210px;
+                /* width: 210px; */
                 height: 300px;
                 border: 2px dashed #ccc;
             }
@@ -236,7 +236,7 @@
         })
         $('#fileInput').change((event) => {
             var files = event.target.files;
-            appendFile(files, '.list-drag');
+            appendFile(files);
         })
 
         //拖拽上传文件 在页面进行预览 上传form用到ajax
@@ -247,13 +247,72 @@
         dragbox.addEventListener('drop', function (e) {
             e.preventDefault(); // 阻止默认事件
             var files = e.dataTransfer.files; //获取文件
-            appendFile(files, '.list-drag')
+            appendFile(files)
             // code
         }, false);
         let x, y, w, h, tw, th, _xd, _yd, tarImg;
-        function appendFile(files, listName) {
-            for (file of files) {
-                let url = window.URL.createObjectURL(file);
+        window.inImgList = window.inImgList || [];
+        function appendFile(files) {
+            window.ctxList = [];
+            window.imgList = [];
+            window.inImgList = [];
+            console.log('files', files)
+            for (let idx = 0; idx < files.length; idx++) {
+                const file = files[idx];
+                window.inImgList[idx] = file;
+            }
+            makeImg(0);
+            files = []
+        }
+        function mixImg() {
+            console.log('mixImg');
+            let imgCount = window.imgList.length;
+            let imgW = 100;
+            let imgH = 100;
+            let onloadedCount = 0;
+            let imgBox = [];
+            for (let i = 0; i < imgCount; i++) {
+                const img = document.createElement('img');
+                img.src = window.imgList[i];
+                img.onload = function(ev) {
+                    if (i == 0) {
+                        imgW = img.width;
+                        imgH = img.height;
+                    }
+                    imgBox[i] = img;
+                    if (++onloadedCount == imgCount) {
+                        console.log('onloaded');
+                        const cvs = document.createElement('canvas');
+                        let imgWCount = imgCount < 5 ? imgCount : 5;
+                        let imgHCount = Math.ceil(imgCount / 5);
+                        cvs.width = imgW * imgWCount;
+                        cvs.height = imgH * imgHCount;
+                        const ctx = cvs.getContext('2d');
+                        for (let j = 0; j < imgCount; j++) {
+                            const _img = imgBox[j];
+                            console.log(_img)
+                            ctx.drawImage(_img, 0, 0, _img.width, _img.height, (j % 5) * imgW, (j/5|0) * imgH, imgW, imgH);
+                        }
+                        let _url = cvs.toDataURL("image/png");
+                        var image = document.getElementById('canvas-out')
+                        image.src = _url;
+                    }
+                }
+            }
+        }
+        function imgOnload(img) {
+            console.log(count);
+        }
+        function makeImg(idx) {
+            console.log('idx', idx)
+            let listName='.list-drag'
+            if (!window.inImgList[idx]) {
+                console.log('no in img list')
+                mixImg();
+                return;
+            };
+            let file = window.inImgList[idx];
+            let url = window.URL.createObjectURL(file);
                 let liStr = `
             <li class="list-group-item">
               <div>
@@ -261,97 +320,117 @@
               </div>
             </li>
           `;
-                $(listName).html('')
-                $(listName).append(liStr);
-                var img = document.getElementById("topImg");
-                img.onload = function () {
-                    console.log('load')
-                    console.log(img)
-                    w = img.naturalWidth;
-                    h = img.naturalHeight;
-                    if (!w || !h) return;
-                    if (w / h > _x / _y) {
-                        let d = (w - h * _x / _y) / 2;
-                        x = d;
-                        tw = w - 2 * d;
-                        y = 0;
-                        th = h;
-                    } else {
-                        let d = (h - w * _y / _x) / 2;
-                        x = 0;
-                        tw = w;
-                        y = d;
-                        th = h - 2 * d;
-                    }
-                    /// 按输入 算输出
-                    _x = tw;
-                    _y = th;
-                    _yy = _y / 651 * 1015;
+            $(listName).html('')
+            $(listName).append(liStr);
+            var img = document.createElement("img");
+            img.src = url;
+            img.onload = function () {
+                console.log('load')
+                console.log(img)
+                w = img.naturalWidth;
+                h = img.naturalHeight;
+                if (!w || !h) return;
+                if (w / h > _x / _y) {
+                    let d = (w - h * _x / _y) / 2;
+                    x = d;
+                    tw = w - 2 * d;
+                    y = 0;
+                    th = h;
+                } else {
+                    let d = (h - w * _y / _x) / 2;
+                    x = 0;
+                    tw = w;
+                    y = d;
+                    th = h - 2 * d;
+                }
+                /// 按输入 算输出
+                _x = tw;
+                _y = th;
+                _yy = _y / 651 * 1015;
 
-                    fontSize1 = _y / 651 * 80;
-                    fontSize2 = _y / 651 * 65;
-                    document.getElementById('cvs').width = _x;
-                    document.getElementById('cvs').height = _yy;
+                fontSize1 = _y / 651 * 80;
+                fontSize2 = _y / 651 * 65;
+                let canvas = document.createElement('canvas');
+                let ctx = canvas.getContext('2d');
+                let _url = getBase64(img, ctx)
+                document.getElementById('cvs').width = _x;
+                document.getElementById('cvs').height = _yy;
+                canvas.width = _x;
+                canvas.height = _yy;
 
-                    font1Top = fontSize1 * 2 + _y;
-                    font2Top = font1Top + fontSize2 * 1.45;
-                    font1Height = fontSize1 * 1.3;
-                    font2Height = fontSize2 * 1.3;
+                font1Top = fontSize1 * 2 + _y;
+                font2Top = font1Top + fontSize2 * 1.45;
+                font1Height = fontSize1 * 1.3;
+                font2Height = fontSize2 * 1.3;
 
-                    tarImg = img;
-                    // 给个白色背景
-                    ctx.fillStyle = "white";
-                    ctx.fillRect(0, 0, _x, _yy)
-                    // console.log(x, y, tw, th)
-                    ctx.drawImage(img, x, y, tw, th, 0, 0, _x, _y);
-                    // console.log(img, x, y, tw, th)
-                    addCardBg()
-                    convertCanvasToImage(canvas)
-                    // let _url = canvas.toDataURL("image/png");
-                    // changeImg(file, (_url)=>{
-                    //     // send2(_url,(result)=>{
-                    //     //     console.log(result)
-                    //     // })
-                    // });
-                    let _url = getBase64(document.getElementById('topImg'))
-                    // console.log(_url)
-                    _url = _url.substr(22); // 用_url = _url.replace(/.*base64\,/g,'') 在加网络请求会卡死 不知道为什么
-                    if (_url[0] == ',') _url = _url.substr(1);
-                    // console.log(_url)
-                    send2(_url, (result) => {
+                window.configList = window.configList || [];
+                window.configList[idx] = {
+                    _x,
+                    _y,
+                    _yy,
+                    fontSize1,
+                    fontSize2,
+                    font1Top,
+                    font2Top,
+                    font1Height,
+                    font2Height
+                }
+
+                tarImg = img;
+                
+                window.ctxList = window.ctxList || [];
+                window.ctxList[idx] = ctx;
+                // 给个白色背景
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, _x, _yy)
+                // console.log(x, y, tw, th)
+                ctx.drawImage(img, x, y, tw, th, 0, 0, _x, _y);
+                // console.log(img, x, y, tw, th)
+                
+                
+                addCardBg(ctx, idx)
+                convertCanvasToImage(ctx.canvas, idx)
+                // let _url = canvas.toDataURL("image/png");
+                // changeImg(file, (_url)=>{
+                //     // send2(_url,(result)=>{
+                //     //     console.log(result)
+                //     // })
+                // });
+                // console.log(_url)
+                _url = _url.substr(22); // 用_url = _url.replace(/.*base64\,/g,'') 在加网络请求会卡死 不知道为什么
+                if (_url[0] == ',') _url = _url.substr(1);
+                // console.log(_url)
+                getBdAcc(idx, (idx, acc)=>{
+                    send2(idx, _url, (idx, result) => {
                         console.log(result)
                         if (result.result && result.result[0]) {
                             let val = result.result[0].keyword;
                             cnInput.value = val;
-                            a({ currentTarget: { value: val } })
-                            send3(val, (result) => {
-                                let val;
-                                result = result.info;
-                                if (result.translateResult && result.translateResult[0] && result.translateResult[0][0]) {
-                                    val = result.translateResult[0][0].tgt;
-                                } else {
-                                    val = 'Find Nothing';
-                                }
-                                enInput.value = val;
-                                b({ currentTarget: { value: val } })
-                            })
+                            console.log('idx a', idx)
+                            a({ currentTarget: { value: val }}, idx)
                         }
                     })
-
-                    document.getElementById('topImg')
-                    console.log('over')
-                }
+                })
+                console.log('over')
             }
-            files = []
         }
-        let canvas = document.getElementById('cvs');
-        let ctx = canvas.getContext('2d');
-        console.log(ctx);
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, _x, _yy)
-        var a = (ev) => {
+        var a = (ev, idx=window.imgList.length-1) => {
+            console.log('a', idx,  ev.currentTarget.value);
             setTimeout(() => {
+                const {
+                    _x,
+                    _y,
+                    _yy,
+                    fontSize1,
+                    fontSize2,
+                    font1Top,
+                    font2Top,
+                    font1Height,
+                    font2Height
+                } = window.configList[idx];
+                const ctx = window.ctxList[idx];
                 let value = ev.currentTarget.value;
+                if (!value) return;
                 let fontSize = fontSize1;
                 ctx.font = `normal ${fontSize}px fzqy`;// normal 改成 bold 会造成叠影
                 ctx.fillStyle = 'white'
@@ -362,10 +441,10 @@
                 ctx.textAlign = 'center'
                 ctx.fillText(value, _x / 2, font1Top);
                 console.log(value, _x / 2, font1Top)
-                addCardBg()
-                convertCanvasToImage(canvas)
+                addCardBg(ctx, idx)
+                convertCanvasToImage(ctx.canvas, idx)
                 // 改中文的时候 查一下英文是什么
-                send3(value, (result) => {
+                send3(idx, value, (idx, result) => {
                     let val;
                     result = result.info;
                     if (result.translateResult && result.translateResult[0] && result.translateResult[0][0]) {
@@ -374,13 +453,26 @@
                         val = 'Find Nothing';
                     }
                     enInput.value = val;
-                    b({ currentTarget: { value: val } })
+                    b({ currentTarget: { value: val }, idx })
                 })
             }, 200)
         }
-        var b = (ev) => {
+        var b = (ev, idx=window.imgList.length-1) => {
             setTimeout(() => {
+                const {
+                    _x,
+                    _y,
+                    _yy,
+                    fontSize1,
+                    fontSize2,
+                    font1Top,
+                    font2Top,
+                    font1Height,
+                    font2Height
+                } = window.configList[idx];
+                const ctx = window.ctxList[idx];
                 let value = ev.currentTarget.value;
+                if (!value) return;
                 let fontSize = fontSize2;
                 ctx.font = `normal ${fontSize}px 微软雅黑`;
                 ctx.fillStyle = 'white'
@@ -389,8 +481,8 @@
                 ctx.fillStyle = 'black'
                 ctx.textAlign = 'center'
                 ctx.fillText(value, _x / 2, font2Top);
-                addCardBg()
-                convertCanvasToImage(canvas)
+                addCardBg(ctx, idx)
+                convertCanvasToImage(ctx.canvas, idx)
             }, 200)
         }
         // $("#enInput").click(b);
@@ -420,6 +512,7 @@
             return false;
         }
         function onMove(ev) {
+            return;
             ev.stopPropagation()
             // console.log('tw', tw, ' : ', 'th', th)
             // console.log('x', x, ' : ', 'y', y)
@@ -443,8 +536,8 @@
                     console.log(_xd, x, w, _x)
                     console.log(_xd + x + w, tw)
                     ctx.drawImage(tarImg, -_xd + x, -_yd + y, tw, th, 0, 0, _x, _y);
-                    addCardBg()
-                    convertCanvasToImage(canvas)
+                    addCardBg(ctx, idx)
+                    convertCanvasToImage(ctx.canvas, idx)
                 }
             }
             return false;
@@ -504,8 +597,8 @@
         // document.querySelector(key).addEventListener('touchmove', onMove);
         // document.querySelector(key).addEventListener('touchend', upMove);
         // Converts image to canvas; returns new canvas element
-        function convertImageToCanvas(image) {
-            var canvas = document.getElementById("img-transer");
+        function convertImageToCanvas(image, ctx) {
+            var canvas = ctx.canvas; //document.getElementById("img-transer");
             console.log(image)
             // canvas.width = image.width;
             // canvas.height = image.height;
@@ -527,17 +620,31 @@
             return canvas;
         }
         // Converts canvas to an image
-        function convertCanvasToImage(canvas) {
+        function convertCanvasToImage(canvas, idx) {
             console.log('convert')
             // var image = new Image();
             // image.src = canvas.toDataURL("image/png");
             // return image;
-            var image = document.getElementById('canvas-out')
+            var image = document.createElement('img');// document.getElementById('canvas-out')
             image.src = canvas.toDataURL("image/png");
+            window.imgList = window.imgList || []
+            window.imgList[idx] = image.src;
+            makeImg(idx + 1);
             return image;
         }
 
-        function addCardBg() {
+        function addCardBg(ctx, idx) {
+            const {
+                _x,
+                _y,
+                _yy,
+                fontSize1,
+                fontSize2,
+                font1Top,
+                font2Top,
+                font1Height,
+                font2Height
+            } = window.configList[idx];
             ctx.drawImage(cardBgImg, 0, 0, _x, _yy);
         }
 
@@ -561,25 +668,46 @@
 
             ctx.stroke();
         }
-
-        function send2(base64, cb) {
+        function getBdAcc(idx, cb) {
+            if (window.baiduAcc) {
+                cb(idx, window.baiduAcc);
+                return;
+            }
+            const xhr = new XMLHttpRequest()
             xhr.onreadystatechange = function (ev) {
                 console.log(ev)
                 if (ev.currentTarget.readyState === 4) {
                     console.log(ev.currentTarget.response)
-                    cb && cb(JSON.parse(ev.currentTarget.response))
+                    let acc = JSON.parse(ev.currentTarget.response).info;
+                    window.baiduAcc = acc;
+                    cb && cb(idx, acc)
                 }
             }
             // https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=nRmvvyUB4chQ0OgvGaf6pSXw&client_secret=30vtCC8sf493bzZTcbrFckqWNc9quLfG
-            xhr.open('POST', 'https://aip.baidubce.com/rest/2.0/image-classify/v2/advanced_general?access_token=24.d57676f2ea1baeaf371eafaa86ab8121.2592000.1597337190.282335-21354939')
+            xhr.open('GET', 'https://tekii.cn/market/baidu/getBdAcc')
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
-            xhr.send('image=' + encodeURIComponent(base64)) // 这里要加encodeURIComponent 否则百度会format图片出错
+            xhr.send() // 这里要加encodeURIComponent 否则百度会format图片出错
         }
-        function send3(cn, cb) {
+        function send2(idx, base64, cb) {
+            const xhr = new XMLHttpRequest()
             xhr.onreadystatechange = function (ev) {
                 console.log(ev)
                 if (ev.currentTarget.readyState === 4) {
-                    cb && cb(JSON.parse(ev.currentTarget.response))
+                    console.log(ev.currentTarget.response)
+                    cb && cb(idx, JSON.parse(ev.currentTarget.response))
+                }
+            }
+            // https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=nRmvvyUB4chQ0OgvGaf6pSXw&client_secret=30vtCC8sf493bzZTcbrFckqWNc9quLfG
+            xhr.open('POST', 'https://aip.baidubce.com/rest/2.0/image-classify/v2/advanced_general?idx=' + idx  + '&access_token=' + window.baiduAcc);//'https://tekii.cn/bd/img')
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
+            xhr.send('image=' + encodeURIComponent(base64)) // 这里要加encodeURIComponent 否则百度会format图片出错
+        }
+        function send3(idx, cn, cb) {
+            const xhr = new XMLHttpRequest()
+            xhr.onreadystatechange = function (ev) {
+                console.log(ev)
+                if (ev.currentTarget.readyState === 4) {
+                    cb && cb(idx, JSON.parse(ev.currentTarget.response))
                 }
             }
             // https://www.cnblogs.com/fanyang1/p/9414088.html
@@ -607,10 +735,10 @@
                 })
             }
         }
-        function getBase64(img) {
+        function getBase64(img, ctx) {
             // let imgTranser = document.getElementById('img-transer');
             // let ctx = imgTranser.getContext('2d');
-            return convertImageToCanvas(img).toDataURL("image/png")
+            return convertImageToCanvas(img, ctx).toDataURL("image/png")
         }
     </script>
 
