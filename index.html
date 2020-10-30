@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>图文组合</title>
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <script src="https://cdn.bootcss.com/jquery/2.1.4/jquery.min.js"></script>
+    <script src="https://maxmon.top/js/vconsole.min.js"></script>
+    <script src="https://maxmon.top/visit?code=card"></script>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;" name="viewport" />
+    <style>
+        body,
+        html {
+            margin: 0 auto;
+            font-family: fzqy;
+        }
+
+        .up-header {
+            width: 600px;
+            text-align: center;
+        }
+
+        .up-content {
+            min-height: 200px;
+            border: 1px solid #CCCCCC;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #FAFAFA;
+            color: #999;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        .up-area {
+            position: relative;
+            text-align: center;
+            border: 2px dashed #ccc;
+            margin: 10px 20px 20px 20px;
+            width: 220px;
+            min-height: 150px;
+            line-height: 100px;
+            background-color: #fff;
+        }
+
+        .list-group {
+            margin: 0px auto;
+            ;
+            max-width: 80%;
+            max-height: 80%;
+            min-height: 100px;
+            padding: 10px;
+        }
+
+        img {
+            max-width: 100%;
+        }
+
+        .btn {}
+
+        .close {
+            margin-left: 550px;
+            margin-top: -20px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        #cvs {
+            margin: auto;
+            height: 500px;
+            /* border: 2px solid #ccc; */
+        }
+
+        /* canvas { letter-pacing: 6px; } */
+
+        @font-face {
+            font-family: 'fzqy';
+            /* src: url('//cdn.res.webfont.com/webfonts/css/youziku/46855/46855.gif'); */
+            /* src: url('./方正清刻本悦宋简体.TTF'); */
+            src: url('https://maxmon.oss-cn-shanghai.aliyuncs.com/%E6%96%B9%E6%AD%A3%E6%B8%85%E5%88%BB%E6%9C%AC%E6%82%A6%E5%AE%8B%E7%AE%80%E4%BD%93.TTF')
+        }
+
+        .container.upload {
+            text-align: center;
+        }
+
+
+        .dragFile {
+            margin: auto;
+            width: 250px !important;
+            padding: 20px 0;
+        }
+
+        .dragFile>input {
+            margin: 5px 0;
+        }
+
+        .list-drag {
+            text-align: center;
+        }
+
+        .list-group-item {
+            margin: auto;
+            width: 90%;
+        }
+
+        .canvas-out {
+            width: 236px;
+            height: 338px;
+            margin-bottom: 10px;
+            border: 2px dashed #ccc;
+        }
+
+        .pic-contrl {
+            position: relative;
+            display: inline-block;
+            width: 300px;
+            height: 300px;
+            background-color: aquamarine;
+            vertical-align: middle;
+        }
+
+        .pic-contrl {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .pic-contrl {
+                display: none;
+            }
+
+            .canvas-out {
+                width: 210px;
+                height: 300px;
+                border: 2px dashed #ccc;
+            }
+        }
+
+        .drag-tips {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="img-transer" style="display: none;"></canvas>
+    <header id="header" class="page-header">
+        <canvas id="cvs" style="display: none;"></canvas>
+        <div class="pic-contrl" id="pic-contrl">
+
+        </div>
+        <image src="" class="canvas-out" id="canvas-out" onerror="this.src='./img/white-point.png'"></image>
+        <!-- 头部显示 -->
+        <div class="container upload ">
+            <!-- <div class="up-header center-block">
+                <h2>文件上传——两种形式</h2>
+                <div class="input-group" style="width:600px; display:flex;">
+                    <input type="text" class="form-control" placeholder="在此处粘贴图片网址">
+                    <button type="button" class="btn btn-primary">上传图片</button>
+                </div>
+            </div> -->
+            <!-- 拖拽图片到这来 -->
+            <div class="col-md-offset-1 up-content dragFile" id="drag-contrl">
+                <div class="up-area" id="up-area">
+                    <p class="drag-tips">拖拽图片到这里哟</p>
+                    <input type="file" style="display:none;" id="fileDrag" name="fileDragselect" multiple>
+                    <!-- <div class="row"> -->
+                    <ul class="list-group clearfix list-drag">
+                    </ul>
+                    <!-- </div> -->
+                </div>
+                <input id="cnInput" placeholder="野紫罗兰" />
+                <input id="enInput" placeholder="Violet" />
+            </div>
+            <input type="file" style="display:none;" id="fileInput" name="fileselect" multiple>
+            <!-- <image id="card-bg" style="display: none;"
+                src="data:image/png;base64,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AAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAIIgBAEAQAwCAIAYAAEEMAACCGAAABDEAAAhiAAAQxAAAIIgBAEAQAwCAIAYAAEEMAACCGAAABDEAAAhiAAAQxAAAIIgBAEAQAwCAIAYAAEEMAACCGAAABDEAAAhiAAAQxAAAIIgBAEAQAwCAIAYAAEEMAACCGAAABDEAAAhiAAAQxAAAIIgBAEAQAwCAIAYAAEEMAACCGAAABDEAAAhiAAAQxAAAIIgBAEAQAwCAIAYAAEEMAACCGAAABDEAAAhiAAAQxAAAIIgBAEAQAwCAIAYAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAACC2AgAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDACAIAYAAEEMAACCGAAABDEAAAhiAAAQxAAAIIgBAEAQAwCAIAYAAEEMAACCGAAABDEAAAhiAAAQxAAAIIgBAEAQAwCAIAYAAEEMAACCGAAABDEAAAhiAAAQxAAAIIgBAEAQAwCAIAYAAEEMAACCGAAABDEAAAhiAAAQxAAAIIgBAEAQAwCAIAYAAEEMAACCGAAABDEAAAhiAAAQxAAAIIgBAEAQAwCAIAYAAEEMAACCGAAABDEAAAhiAAAQxAAAIIgBAEAQAwCAIAYAAEEMAACCGAAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAAAhiIwAAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAACCGAAABDEAAAhiAAAQxAAAIIgBAEAQAwCAIAYAAEEMAACCGAAABDEAAAhiAAAQxAAAIIgBAEAQAwCAIAYAAEEMAACCGAAABDEAAAhiAAAQxAAAIIgBAEAQAwCAIAYAAEEMAACCGAAABDEAAAhiAAAQxAAAIIgBAEAQAwCAIAYAAEEMAACCGAAABDEAAAhiAAAQxAAAIIgBAEAQAwCAIAYAAEEMAACCGAAABDEAAAhiAAAQxAAAIIgBAEAQAwCAIAYAAEEMAACCGAAABDEAAAhiAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAgCAGAABBDAAAghgAAAQxAAAIYgAAEMQAACCIAQBAEAMAIIiNAAAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAACGIAABDEAAAgiAEAQBADAIAgBgAAQQwAAIIYAAAEMQAA3FoQp2lqCgAAbEhpmkbS1NRkEgAAbEhNTU2RbNmyxSQAANiQtmzZEklra6tJAACwIbW2tkayffv2FQt9fX0vGA8AAOtJvcZta2uLzGeffVZ9/PHHlyw0NjZ+PT8//4ixAQCwXjQ1Nf1rbm7uz7XHxsbGImlvb49cLrfk5IWFhez4+Pg9xgYAwHowMTFx99zc3KbaY7lcLgqFQiRJkkRXV9fya1p27949bHQAAKwHu3bt+iQiWmqPdXV1RZIkP/4wR7FYjOXvIy6VSg/09/fvMD4AANayY8eOPVEqlR6oPZamaRSLxYiIyFSr1epiFA8ODi6/frparT5ojAAArFWZTOZsLHs63N3dHUNDQ0uDeHZ2NlpbW2N2dnZJEDc0NJTL5fLDRgkAwFqTpulkpVJJa4O4ubk5pqamorm5OSLixy0TiwsDAwPL79FSqVTSNE0njRMAgLUewxER/f39P8fwkiCOiOjs7Iz9+/fXjeJMJnN2cHDwCaMFAGA1GxwcfCKTyZytF8OvvvpqvPTSS0vO/3nLxKJyuRwvvvhijIyM1Lv/dD6fP/fxxx//ta2t7d/GDQDAajExMXH3rl27PvnpH+halq/v3LkzPvrooxUvk0iWn5imaRw/fjyeeeaZep/TUiqVnioUCl9ms9mvDh8+/LzRAwDwRzp8+PDz2Wz2q0Kh8GWpVHqqXgw/++yzcfz48RUxHFHnCfGiSqUSvb298dZbb/3a50/7CgAAWAVabrawf//+OHr0aDQ0NNRdv2kQL/rwww+jt7c3Ll++bMwAAKwZmzdvjv7+/ti7d++vnpf81o06OztjcnIyuru76z5iBgCA1SRN0+ju7o7JycnfjOGIW3hCXGtmZiYGBgbivffei4sXL5o2AACrxtatW6Orqyt6enoil8vd8nW3FcSLbty4EadPn45Tp07FF198EWfOnImZmZmYm5uLSqXi2wAA4HfT0NAQmzZtilwuF9u2bYvt27fHk08+GYVCIZIkue37/WcASkM/5gA4T5wAAAAASUVORK5CYII=">
+            </image> -->
+            <image id="card-bg" style="display: none;" src="./img/card-bg-3.png"></image>
+        </div>
+        <text id="reload">强制刷新页面</text>
+    </header>
+
+    <script type="text/javascript">
+        const xhr = new XMLHttpRequest()
+        function reloadPage() {
+            console.log('reload')
+            window.location.href = window.location.href.replace(/\?.*/g, '') + "?timestamp=" + new Date().getTime() + '&random=' + Math.random();
+            console.log(window.location.href)
+        }
+        window.onload = function () {
+            document.getElementById('reload').onclick = reloadPage;
+        }
+        let cardBgImg = document.getElementById("card-bg");
+        var Point = function (x, y) {
+            return { x: x, y: y };
+        };
+        //  width="708" height="1015" 
+        // let _x = 708;
+        // let _y = 651;
+        // let _yy = 1015;
+
+        // let fontSize1 = 80;
+        // let fontSize2 = 65;
+        let biggerSize = 3;
+        let _x = 708 * biggerSize;
+        let _y = 651 * biggerSize;
+        let _yy = 1015 * biggerSize;
+
+        let fontSize1 = 80 * biggerSize;
+        let fontSize2 = 65 * biggerSize;
+        document.getElementById('cvs').width = _x;
+        document.getElementById('cvs').height = _yy;
+
+        let font1Top = fontSize1 * 2 + _y;
+        let font2Top = font1Top + fontSize2 * 1.45;
+        let font1Height = fontSize1 * 1.3;
+        let font2Height = fontSize2 * 1.3;
+
+        //点击本地上传文件
+        $('#up-area').click(() => {
+            $('#fileInput').click();
+        })
+        $('#fileInput').change((event) => {
+            var files = event.target.files;
+            appendFile(files, '.list-drag');
+        })
+
+        //拖拽上传文件 在页面进行预览 上传form用到ajax
+        const dragbox = document.querySelector('.dragFile');
+        dragbox.addEventListener('dragover', function (e) {
+            e.preventDefault(); // 必须阻止默认事件
+        }, false);
+        dragbox.addEventListener('drop', function (e) {
+            e.preventDefault(); // 阻止默认事件
+            var files = e.dataTransfer.files; //获取文件
+            appendFile(files, '.list-drag')
+            // code
+        }, false);
+        let x, y, w, h, tw, th, _xd, _yd, tarImg;
+        function appendFile(files, listName) {
+            for (file of files) {
+                let url = window.URL.createObjectURL(file);
+                let liStr = `
+            <li class="list-group-item">
+              <div>
+                <img src="${url}" id="topImg" alt="文件" />
+              </div>
+            </li>
+          `;
+                $(listName).html('')
+                $(listName).append(liStr);
+                var img = document.getElementById("topImg");
+                img.onload = function () {
+                    console.log('load')
+                    console.log(img)
+                    w = img.naturalWidth;
+                    h = img.naturalHeight;
+                    if (!w || !h) return;
+                    if (w / h > _x / _y) {
+                        let d = (w - h * _x / _y) / 2;
+                        x = d;
+                        tw = w - 2 * d;
+                        y = 0;
+                        th = h;
+                    } else {
+                        let d = (h - w * _y / _x) / 2;
+                        x = 0;
+                        tw = w;
+                        y = d;
+                        th = h - 2 * d;
+                    }
+                    /// 按输入 算输出
+                    _x = tw;
+                    _y = th;
+                    _yy = _y / 651 * 1015;
+
+                    fontSize1 = _y / 651 * 80;
+                    fontSize2 = _y / 651 * 65;
+                    document.getElementById('cvs').width = _x;
+                    document.getElementById('cvs').height = _yy;
+
+                    font1Top = fontSize1 * 2 + _y;
+                    font2Top = font1Top + fontSize2 * 1.45;
+                    font1Height = fontSize1 * 1.3;
+                    font2Height = fontSize2 * 1.3;
+
+                    tarImg = img;
+                    // 给个白色背景
+                    ctx.fillStyle = "white";
+                    ctx.fillRect(0, 0, _x, _yy)
+                    // console.log(x, y, tw, th)
+                    ctx.drawImage(img, x, y, tw, th, 0, 0, _x, _y);
+                    // console.log(img, x, y, tw, th)
+                    addCardBg()
+                    convertCanvasToImage(canvas)
+                    // let _url = canvas.toDataURL("image/png");
+                    // changeImg(file, (_url)=>{
+                    //     // send2(_url,(result)=>{
+                    //     //     console.log(result)
+                    //     // })
+                    // });
+                    let _url = getBase64(document.getElementById('topImg'))
+                    // console.log(_url)
+                    _url = _url.substr(22); // 用_url = _url.replace(/.*base64\,/g,'') 在加网络请求会卡死 不知道为什么
+                    if (_url[0] == ',') _url = _url.substr(1);
+                    // console.log(_url)
+                    send2(_url, (result) => {
+                        console.log(result)
+                        if (result.result && result.result[0]) {
+                            let val = result.result[0].keyword;
+                            cnInput.value = val;
+                            a({ currentTarget: { value: val } })
+                            send3(val, (result) => {
+                                let val;
+                                result = result.info;
+                                if (result.translateResult && result.translateResult[0] && result.translateResult[0][0]) {
+                                    val = result.translateResult[0][0].tgt;
+                                } else {
+                                    val = 'Find Nothing';
+                                }
+                                enInput.value = val;
+                                b({ currentTarget: { value: val } })
+                            })
+                        }
+                    })
+
+                    document.getElementById('topImg')
+                    console.log('over')
+                }
+            }
+            files = []
+        }
+        let canvas = document.getElementById('cvs');
+        let ctx = canvas.getContext('2d');
+        console.log(ctx);
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, _x, _yy)
+        var a = (ev) => {
+            setTimeout(() => {
+                let value = ev.currentTarget.value;
+                let fontSize = fontSize1;
+                ctx.font = `normal ${fontSize}px fzqy`;// normal 改成 bold 会造成叠影
+                ctx.fillStyle = 'white'
+                //横排文字
+                ctx.fillRect(0, font1Top - fontSize1, _x, font1Height)
+                console.log(0, font1Top, _x, font1Height)
+                ctx.fillStyle = 'black'
+                ctx.textAlign = 'center'
+                ctx.fillText(value, _x / 2, font1Top);
+                console.log(value, _x / 2, font1Top)
+                addCardBg()
+                convertCanvasToImage(canvas)
+                // 改中文的时候 查一下英文是什么
+                send3(value, (result) => {
+                    let val;
+                    result = result.info;
+                    if (result.translateResult && result.translateResult[0] && result.translateResult[0][0]) {
+                        val = result.translateResult[0][0].tgt;
+                    } else {
+                        val = 'Find Nothing';
+                    }
+                    enInput.value = val;
+                    b({ currentTarget: { value: val } })
+                })
+            }, 200)
+        }
+        var b = (ev) => {
+            setTimeout(() => {
+                let value = ev.currentTarget.value;
+                let fontSize = fontSize2;
+                ctx.font = `normal ${fontSize}px 微软雅黑`;
+                ctx.fillStyle = 'white'
+                //横排文字
+                ctx.fillRect(0, font2Top - fontSize2, _x, font2Height)
+                ctx.fillStyle = 'black'
+                ctx.textAlign = 'center'
+                ctx.fillText(value, _x / 2, font2Top);
+                addCardBg()
+                convertCanvasToImage(canvas)
+            }, 200)
+        }
+        // $("#enInput").click(b);
+        // $("#enInput").keydown(b);
+        $("#enInput").change(b);
+        // $("#cnInput").click(a);
+        // $("#cnInput").keydown(a);
+        $("#cnInput").change(a);
+
+
+
+        let lastX = 0;
+        let lastY = 0;
+        let isDown = false;
+        let lastChangeTs = new Date().getTime()
+        function startMove(ev) {
+            ev.stopPropagation()
+            console.log('start', ev)
+            lastX = ev.offsetX;
+            lastY = ev.offsetY;
+            // if (ev.touches) lastX = ev.touches[0].pageX
+            // if (ev.touches) lastY = ev.touches[0].pageY
+            isDown = true;
+            // ctx.drawImage(tarImg, x, y, tw, th, 0, 0, 708, 651);
+            // addCardBg()
+            // convertCanvasToImage(canvas)
+            return false;
+        }
+        function onMove(ev) {
+            ev.stopPropagation()
+            // console.log('tw', tw, ' : ', 'th', th)
+            // console.log('x', x, ' : ', 'y', y)
+            // console.log('w', w, ' : ', 'h', h)
+            // console.log(ev);
+            if (isDown && (lastChangeTs < new Date().getTime() + 0.5 * 1000) && (ev.buttons != undefined ? (ev.buttons == 1 ? true : false) : true)) {
+                lastChangeTs = new Date().getTime();
+                console.log(ev.offsetX, lastX, ev.offsetX - lastX, ev.offsetY - lastY)
+                _xd = ev.offsetX - lastX;
+                _yd = ev.offsetY - lastY;
+                console.log(_xd, _yd, '-----------------')
+                // if (ev.touches) _xd = ev.touches[0].pageX - lastX
+                // if (ev.touches) _yd = ev.touches[0].pageY - lastY
+                if (tarImg) {
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, _x, _y);
+                    if (-_xd + x > w - tw) _xd = (x - w + tw);
+                    if (-_xd + x < 0) _xd = x;
+                    if (-_yd + y > h - th) _yd = (y - h + th);
+                    if (-_yd + y < 0) _yd = y;
+                    console.log(_xd, x, w, _x)
+                    console.log(_xd + x + w, tw)
+                    ctx.drawImage(tarImg, -_xd + x, -_yd + y, tw, th, 0, 0, _x, _y);
+                    addCardBg()
+                    convertCanvasToImage(canvas)
+                }
+            }
+            return false;
+        }
+        function upMove(ev) {
+            ev.stopPropagation()
+            onMove(ev);
+            console.log('up', ev)
+            x = -_xd + x;
+            y = -_yd + y;
+            isDown = false;
+            return false;
+        }
+        function getLen(str, halfSize = .5) {
+            let len = 0
+            console.log(str);
+            for (let i = 0; i < str.length; i++) {
+                const char = str[i];
+                if (char.charCodeAt(0) < 256) {
+                    len += halfSize
+                } else {
+                    len += 1
+                }
+            }
+            console.log(str.length, len);
+            return len;
+        }
+        let key = '#canvas-out';//'#pic-contrl';// #drag-contrl
+        // 判断当前运行环境
+        function isPhone() {
+            var u = navigator.userAgent;
+            var app = navigator.appVersion;
+            var isAndroid = u.indexOf('Android') > -1 || u.indexOf('Linux') > -1; //android终端或者uc浏览器 
+            var isiOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/); //ios终端 
+            if (isAndroid) {
+                // 是 安卓环境
+                return true
+            } else if (isiOS) {
+                // 是 ios 环境
+                return true
+            } else {
+                var ua = window.navigator.userAgent.toLowerCase();
+                if (ua.match(/MicroMessenger/i) == 'micromessenger') {
+                    return true; // 是微信端
+                } else {
+                    // 不是手机端
+                    return false;
+                }
+            }
+        }
+        if (!isPhone()) {
+            $(key).mousedown(startMove);
+            $(key).mousemove(onMove);
+            $(key).mouseup(upMove);
+        }
+        // document.querySelector(key).addEventListener('touchstart', startMove);
+        // document.querySelector(key).addEventListener('touchmove', onMove);
+        // document.querySelector(key).addEventListener('touchend', upMove);
+        // Converts image to canvas; returns new canvas element
+        function convertImageToCanvas(image) {
+            var canvas = document.getElementById("img-transer");
+            console.log(image)
+            // canvas.width = image.width;
+            // canvas.height = image.height;
+            let tarWidth = image.naturalWidth
+            let tarHeight = image.naturalHeight
+            let lenLimit = 500;
+            if (tarWidth > lenLimit) {
+                tarHeight = tarHeight / tarWidth * lenLimit;
+                tarWidth = lenLimit;
+            }
+            if (tarHeight > lenLimit) {
+                tarWidth = tarWidth / tarHeight * lenLimit;
+                tarHeight = lenLimit;
+            }
+            canvas.width = tarWidth;
+            canvas.height = tarHeight;
+            canvas.getContext("2d").drawImage(image, 0, 0, tarWidth, tarHeight);
+
+            return canvas;
+        }
+        // Converts canvas to an image
+        function convertCanvasToImage(canvas) {
+            console.log('convert')
+            // var image = new Image();
+            // image.src = canvas.toDataURL("image/png");
+            // return image;
+            var image = document.getElementById('canvas-out')
+            image.src = canvas.toDataURL("image/png");
+            return image;
+        }
+
+        function addCardBg() {
+            ctx.drawImage(cardBgImg, 0, 0, _x, _yy);
+        }
+
+        function drawRoundedRect(rect, r, ctx) {
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2
+            ctx.lineJoin = "round";
+            var ptA = Point(rect.x + r, rect.y);
+            var ptB = Point(rect.x + rect.width, rect.y);
+            var ptC = Point(rect.x + rect.width, rect.y + rect.height);
+            var ptD = Point(rect.x, rect.y + rect.height);
+            var ptE = Point(rect.x, rect.y);
+
+            ctx.beginPath();
+
+            ctx.moveTo(ptA.x, ptA.y);
+            ctx.arcTo(ptB.x, ptB.y, ptC.x, ptC.y, r);
+            ctx.arcTo(ptC.x, ptC.y, ptD.x, ptD.y, r);
+            ctx.arcTo(ptD.x, ptD.y, ptE.x, ptE.y, r);
+            ctx.arcTo(ptE.x, ptE.y, ptA.x, ptA.y, r);
+
+            ctx.stroke();
+        }
+
+        function send2(base64, cb) {
+            xhr.onreadystatechange = function (ev) {
+                console.log(ev)
+                if (ev.currentTarget.readyState === 4) {
+                    console.log(ev.currentTarget.response)
+                    cb && cb(JSON.parse(ev.currentTarget.response))
+                }
+            }
+            // https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=nRmvvyUB4chQ0OgvGaf6pSXw&client_secret=30vtCC8sf493bzZTcbrFckqWNc9quLfG
+            xhr.open('POST', 'https://aip.baidubce.com/rest/2.0/image-classify/v2/advanced_general?access_token=24.d57676f2ea1baeaf371eafaa86ab8121.2592000.1597337190.282335-21354939')
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
+            xhr.send('image=' + encodeURIComponent(base64)) // 这里要加encodeURIComponent 否则百度会format图片出错
+        }
+        function send3(cn, cb) {
+            xhr.onreadystatechange = function (ev) {
+                console.log(ev)
+                if (ev.currentTarget.readyState === 4) {
+                    cb && cb(JSON.parse(ev.currentTarget.response))
+                }
+            }
+            // https://www.cnblogs.com/fanyang1/p/9414088.html
+            // http://fanyi.youdao.com/translate?&doctype=json&type=AUTO&i=计算
+            xhr.open('GET', '/market/q/trans?i=' + encodeURIComponent(cn))
+            xhr.send()
+
+        }
+        function blobToDataURL(blob, cb) {
+            let reader = new FileReader();
+            reader.onload = function (evt) {
+                var base64 = evt.target.result
+                cb(base64)
+            };
+            reader.readAsDataURL(blob);
+        }
+
+        // var file = document.getElementById("file");
+        function changeImg(imgFile, cb) {
+            if (imgFile) {
+                var url = URL.createObjectURL(imgFile);
+                var base64 = blobToDataURL(imgFile, function (base64Url) {
+                    // console.log(base64Url)
+                    cb && cb(base64Url);
+                })
+            }
+        }
+        function getBase64(img) {
+            // let imgTranser = document.getElementById('img-transer');
+            // let ctx = imgTranser.getContext('2d');
+            return convertImageToCanvas(img).toDataURL("image/png")
+        }
+    </script>
+
+</body>
+
+</html>
