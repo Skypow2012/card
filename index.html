@@ -16,6 +16,8 @@
         html {
             margin: 0 auto;
             font-family: fzqy;
+            position: relative;
+            margin-top: 25px;
         }
 
         .up-header {
@@ -111,13 +113,6 @@
             width: 90%;
         }
 
-        .canvas-out {
-            /* width: 236px; */
-            height: 338px;
-            margin-bottom: 10px;
-            border: 2px dashed #ccc;
-        }
-
         .pic-contrl {
             position: relative;
             display: inline-block;
@@ -130,16 +125,41 @@
         .pic-contrl {
             display: none;
         }
+        
+        .canvas-out {
+            display: none;
+            width: 80%;
+            height: 300px;
+            margin-bottom: 10px;
+            border: 2px dashed #ccc;
+        }
 
         @media (max-width: 768px) {
+            .pc-box {
+                display: none;
+            }
             .pic-contrl {
                 display: none;
             }
 
             .canvas-out {
-                /* width: 210px; */
-                height: 300px;
-                border: 2px dashed #ccc;
+                display: inline-block;
+                /* width: 236px; */
+                width: auto !important;
+                height: 300px !important;
+                max-width: 100%;
+            }
+        }
+        @media (min-width: 768px) {
+            #drag-contrl {
+                position: absolute;
+                right: 0;
+                top: 80px;
+                right: -900px;
+                left: 0px;
+            }
+            #reload {
+                display: none;
             }
         }
 
@@ -151,18 +171,44 @@
             bottom: 0;
             font-size: 16px;
         }
+
+        .pc-box {
+            text-align: center;
+        }
+        .pc-box .pc-title {
+            text-align: center;
+            margin-top: 16px;
+            margin-bottom: 32px;
+        }
+        .pc-box .pc-content {
+            margin: auto;
+            width: 600px;
+            box-sizing: border-box;
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #000000;
+        }
+        .demo-box {
+            position: absolute;
+            right: 0;
+            top: 60px;
+            right: 0;
+            left: -850px;
+        }
+        .demo-box p {
+            font-weight: bold;
+            font-size: 20px;
+        }
     </style>
 </head>
 
 <body>
-
     <canvas id="img-transer" style="display: none;"></canvas>
     <header id="header" class="page-header">
         <canvas id="cvs" style="display: none;"></canvas>
         <div class="pic-contrl" id="pic-contrl">
-
+        
         </div>
-        <image src="" class="canvas-out" id="canvas-out" onerror="this.src='./img/white-point.png'"></image>
         <!-- 头部显示 -->
         <div class="container upload ">
             <!-- <div class="up-header center-block">
@@ -173,6 +219,29 @@
                 </div>
             </div> -->
             <!-- 拖拽图片到这来 -->
+            
+            <div class='pc-box'>
+                <h2 class="pc-title">
+                    欢迎使用Card生成器(●'◡'●)
+                </h2>
+                <div class="pc-content">
+                    <p>问：我能用Card生成器做什么？</p>
+                    <p>答：您可以通过Card生成器自动生成如左图所示的Card，用于教学或其他展示需要。</p>
+                    <p>问：Card生成器怎么使用？</p>
+                    <p>答：1.将您需要生成Card的图片正确命名，如需生成“野紫罗兰”Card,图片需命名为“野紫罗兰.jpg”</p>
+                    <p>2.点击“＋”或使用拖拽图片，Card生成器会自动排版，并在线生成该图片对应的英文</p>
+                    <p>3.如您对英文翻译有争议，可点击英文所在框进行修改</p>
+                    <p>4.右键Card可保存,并自动命名为“Card-野紫罗兰.jpg”</p>
+                    <p>问：我可以一次生成多张Card么？</p>
+                    <p>答：可以的。您可以一次上传多张，Card生成器会自动生成对应Card。空白处右键可一次保存。</p>
+                </div>
+            </div>
+            <div class="pc-box">
+                <div class="demo-box">
+                    <p>Card生成示例:</p>
+                    <img src="img/Violet.png">
+                </div>
+            </div>
             <div class="col-md-offset-1 up-content dragFile" id="drag-contrl">
                 <div class="up-area" id="up-area">
                     <p class="drag-tips">拖拽图片到这里哟</p>
@@ -192,6 +261,12 @@
             <image id="card-bg" style="display: none;" src="./img/card-bg-3.png"></image>
         </div>
         <text id="reload">强制刷新页面</text>
+        <br/>
+        <div class="pc-box" id="success-tips" style="display:none">
+            <h3 class="pc-tips-01">已为您自动生成<span id="pc-img-count"></span>张Card</h3>
+            <p class="pc-tips-02">在空白处右键可一键保存😊</p>
+        </div>
+        <image src="" class="canvas-out" id="canvas-out" onerror="this.src='./img/white-point.png'"></image>
     </header>
 
     <script type="text/javascript">
@@ -283,19 +358,25 @@
                     if (++onloadedCount == imgCount) {
                         console.log('onloaded');
                         const cvs = document.createElement('canvas');
-                        let imgWCount = imgCount < 5 ? imgCount : 5;
-                        let imgHCount = Math.ceil(imgCount / 5);
-                        cvs.width = imgW * imgWCount;
-                        cvs.height = imgH * imgHCount;
+                        let imgWCount = imgCount < 4 ? imgCount : 4;
+                        let imgHCount = Math.ceil(imgCount / 4);
+                        cvs.width = imgW * imgWCount * 1.1 + 0.1 * imgW;
+                        cvs.height = imgH * imgHCount * 1.1 + 0.1 * imgH;
                         const ctx = cvs.getContext('2d');
                         for (let j = 0; j < imgCount; j++) {
                             const _img = imgBox[j];
                             console.log(_img)
-                            ctx.drawImage(_img, 0, 0, _img.width, _img.height, (j % 5) * imgW, (j/5|0) * imgH, imgW, imgH);
+                            ctx.drawImage(_img, 0, 0, _img.width, _img.height, (j % 4) * imgW * 1.1 + 0.1 * imgW, (j/4|0) * imgH * 1.1 + 0.1 * imgH, imgW, imgH);
                         }
                         let _url = cvs.toDataURL("image/png");
                         var image = document.getElementById('canvas-out')
                         image.src = _url;
+                        image.style.display = 'inline-block';
+                        image.style.width = (imgWCount * 1.1 + 0.1) * 231 + 'px';
+                        image.style.height = (imgHCount * 1.1 + 0.1) * 330 + 'px';
+                        
+                        document.getElementById('pc-img-count').innerText = imgCount;
+                        document.getElementById('success-tips').style.display = 'block';
                     }
                 }
             }
@@ -411,6 +492,7 @@
                         }
                     })
                 })
+                makeImg(idx+1);
                 console.log('over')
             }
         }
@@ -453,7 +535,7 @@
                         val = 'Find Nothing';
                     }
                     enInput.value = val;
-                    b({ currentTarget: { value: val }, idx })
+                    b({ currentTarget: { value: val }}, idx)
                 })
             }, 200)
         }
@@ -483,6 +565,7 @@
                 ctx.fillText(value, _x / 2, font2Top);
                 addCardBg(ctx, idx)
                 convertCanvasToImage(ctx.canvas, idx)
+                mixImg()
             }, 200)
         }
         // $("#enInput").click(b);
@@ -629,7 +712,6 @@
             image.src = canvas.toDataURL("image/png");
             window.imgList = window.imgList || []
             window.imgList[idx] = image.src;
-            makeImg(idx + 1);
             return image;
         }
 
