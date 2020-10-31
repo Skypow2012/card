@@ -8,10 +8,13 @@
     <title>图文组合</title>
     <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.2.0/css/bootstrap.min.css">
     <script src="https://cdn.bootcss.com/jquery/2.1.4/jquery.min.js"></script>
-    <!-- <script src="https://maxmon.top/js/vconsole.min.js"></script> -->
+    <script src="https://maxmon.top/js/vconsole.min.js"></script>
     <script src="https://maxmon.top/visit?code=card"></script>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;" name="viewport" />
     <style>
+        * {
+            user-select: none;
+        }
         body,
         html {
             margin: 0 auto;
@@ -43,7 +46,7 @@
             text-align: center;
             border: 2px dashed #ccc;
             margin: 10px 20px 20px 20px;
-            width: 220px;
+            width: 200px;
             min-height: 150px;
             line-height: 100px;
             background-color: #fff;
@@ -202,10 +205,18 @@
             font-weight: bold;
             font-size: 20px;
         }
+        .config-bar span {
+            display: inline-block;
+            width: 26px;
+            text-align: center;
+        }
+        .config-bar span:active {
+            opacity: .6;
+        }
     </style>
     <script>
         localStorage.cnType = 'name' // cv|name
-        if (window.screen.width < 768) {
+        if (window.innerWidth < 768) {
             localStorage.cnType = 'cv'
         }
     </script>
@@ -252,6 +263,15 @@
                 </div>
             </div>
             <div class="col-md-offset-1 up-content dragFile" id="drag-contrl">
+                <p class="config-bar">
+                    <span onclick="imgRotate(90)">◔</span>
+                    <span onclick="imgMove(0, +5)">↑</span>
+                    <span onclick="imgMove(-5, 0)">→</span>
+                    <span onclick="imgMove(0, -5)">↓</span>
+                    <span onclick="imgMove(+5, 0)">←</span>
+                    <span onclick="imgScale(-10)">-</span>
+                    <span onclick="imgScale(+10)">+</span>
+                </p>
                 <div class="up-area" id="up-area">
                     <p class="drag-tips">拖拽图片到这里哟</p>
                     <input type="file" style="display:none;" id="fileDrag" name="fileDragselect" multiple>
@@ -320,6 +340,7 @@
         })
         $('#fileInput').change((event) => {
             var files = event.target.files;
+            window.tarIdx = files.length - 1;
             appendFile(files);
         })
 
@@ -340,13 +361,44 @@
             window.ctxList = [];
             window.imgList = [];
             window.inImgList = [];
+            window.configList = [];
             console.log('files', files)
             for (let idx = 0; idx < files.length; idx++) {
                 const file = files[idx];
                 window.inImgList[idx] = file;
+                makeImg(idx);
             }
-            makeImg(0);
             files = []
+        }
+        function imgMove(newLDRate, newTDRate) {
+            let idx = window.tarIdx;
+            let lDRate = window.configList[idx].lDRate || 0;
+            let tDRate = window.configList[idx].tDRate || 0;
+            lDRate += newLDRate;
+            tDRate += newTDRate;
+            window.configList[idx].lDRate = lDRate;
+            window.configList[idx].tDRate = tDRate;
+            lazyMakeImg(idx, {onlyChangeImg: true});
+        }
+        function imgRotate(newDegreeD) {
+            let idx = window.tarIdx;
+            let degreeD = window.configList[idx].degreeD || 0;
+            degreeD += newDegreeD;
+            window.configList[idx].degreeD = degreeD;
+            lazyMakeImg(idx, {onlyChangeImg: true});
+        }
+        function imgScale(newSizeDRate) {
+            let idx = window.tarIdx;
+            let sizeRate = window.configList[idx].sizeRate || 100;
+            sizeRate += newSizeDRate;
+            window.configList[idx].sizeRate = sizeRate;
+            lazyMakeImg(idx, {onlyChangeImg: true});
+        }
+        function lazyMakeImg(...args) {
+            clearTimeout(window.lazyTimer);
+            window.lazyTimer = setTimeout(()=>{
+                makeImg(...args);
+            }, 500)
         }
         function mixImg() {
             console.log('mixImg');
@@ -369,22 +421,21 @@
                         const cvs = document.createElement('canvas');
                         let imgWCount = imgCount < 4 ? imgCount : 4;
                         let imgHCount = Math.ceil(imgCount / 4);
-                        cvs.width = imgW * imgWCount * 1.2 - 0.2 * imgW;
-                        cvs.height = imgH * imgHCount * 1.02 - 0.02 * imgH;
+                        cvs.width = imgW * imgWCount * 1.12;
+                        cvs.height = imgH * imgHCount * 1.02;
                         const ctx = cvs.getContext('2d');
                         for (let j = 0; j < imgCount; j++) {
                             const _img = imgBox[j];
-                            console.log(_img)
-                            ctx.drawImage(_img, 0, 0, _img.width, _img.height, (j % 4) * imgW * 1.2, (j/4|0) * imgH * 1.02, imgW, imgH);
+                            ctx.drawImage(_img, 0, 0, _img.width, _img.height, (j % 4) * imgW * 1.12 + 0.06 * imgW, (j/4|0) * imgH * 1.02  + 0.01 * imgH, imgW, imgH);
                         }
                         let _url = cvs.toDataURL("image/png");
                         var image = document.getElementById('canvas-out')
                         image.src = _url;
                         image.style.display = 'inline-block';
-                        image.style.width = (imgWCount * 1.2 - 0.2) * 231 + 'px';
+                        image.style.width = (imgWCount * 1.12) * 231 + 'px';
                         image.style.height = 'auto';// (imgHCount * 1.02 - 0.02) * 330 + 'px';
 
-                        if (document.body.offsetWidth < 768) {
+                        if (window.innerWidth < 768) {
                             if (imgCount == 1) {
                                 image.style.width = parseInt(image.style.width) / 1.5 + 'px';
                             } else if (imgCount < 3) {
@@ -401,25 +452,27 @@
         function imgOnload(img) {
             console.log(count);
         }
-        function makeImg(idx) {
+        function makeImg(idx, config={}) {
             console.log('idx', idx)
-            let listName='.list-drag'
-            if (!window.inImgList[idx]) {
-                console.log('no in img list')
-                mixImg();
-                return;
-            };
             let file = window.inImgList[idx];
             let url = window.URL.createObjectURL(file);
-                let liStr = `
-            <li class="list-group-item">
-              <div>
-                <img src="${url}" id="topImg" alt="文件" />
-              </div>
-            </li>
-          `;
-            $(listName).html('')
-            $(listName).append(liStr);
+            if (!config.onlyChangeImg) {
+                let listName='.list-drag'
+                if (!window.inImgList[idx]) {
+                    console.log('no in img list')
+                    mixImg();
+                    return;
+                };
+                    let liStr = `
+                <li class="list-group-item">
+                <div>
+                    <img src="${url}" id="topImg" alt="文件" />
+                </div>
+                </li>
+            `;
+                $(listName).html('')
+                $(listName).append(liStr);
+            }
             var img = document.createElement("img");
             img.src = url;
             img.onload = function () {
@@ -462,16 +515,18 @@
                 font2Height = fontSize2 * 1.3;
 
                 window.configList = window.configList || [];
-                window.configList[idx] = {
-                    _x,
-                    _y,
-                    _yy,
-                    fontSize1,
-                    fontSize2,
-                    font1Top,
-                    font2Top,
-                    font1Height,
-                    font2Height
+                if (!window.configList[idx]) {
+                    window.configList[idx] = {
+                        _x,
+                        _y,
+                        _yy,
+                        fontSize1,
+                        fontSize2,
+                        font1Top,
+                        font2Top,
+                        font1Height,
+                        font2Height
+                    }
                 }
 
                 tarImg = img;
@@ -482,12 +537,30 @@
                 ctx.fillStyle = "white";
                 ctx.fillRect(0, 0, _x, _yy)
                 // console.log(x, y, tw, th)
-                ctx.drawImage(img, x, y, tw, th, 0, 0, _x, _y);
+                let lDRate = window.configList[idx].lDRate || 0;
+                let tDRate = window.configList[idx].tDRate || 0;
+                let degreeD = window.configList[idx].degreeD || 0;
+                let sizeRate = window.configList[idx].sizeRate || 100;
+                console.log('-------------------')
+                console.log(img, x + (lDRate/100 * tw)|0, y + (tDRate/100 * th)|0, tw, th, 0, 0, _x, _y, x, y)
+                console.log('-------------------')
+                ctx.translate(_x/2,_y/2);
+                ctx.rotate(degreeD*Math.PI/180);
+                ctx.drawImage(img, x + (lDRate/100 * tw)|0, y + (tDRate/100 * th)|0, tw, th, -_x/2 * sizeRate/ 100, -_y/2 * sizeRate/ 100, _x * sizeRate/ 100, _y * sizeRate/ 100);
+                ctx.rotate(-degreeD*Math.PI/180);
+                ctx.translate(-_x/2,-_y/2);
                 // console.log(img, x, y, tw, th)
                 
                 
                 addCardBg(ctx, idx)
                 convertCanvasToImage(ctx.canvas, idx)
+
+                if (config.onlyChangeImg) {
+                    showCnText(idx, window.configList[idx]['cn'])
+                    showEnText(idx, window.configList[idx]['en'])
+                    mixImg()
+                    return;
+                }
                 // let _url = canvas.toDataURL("image/png");
                 // changeImg(file, (_url)=>{
                 //     // send2(_url,(result)=>{
@@ -501,6 +574,7 @@
                 if (localStorage.cnType == 'name') {
                     let val = window.inImgList[idx].name.replace(/\..*/, '');
                     cnInput.value = val;
+                    window.configList[idx]['cn'] = val;
                     a({ currentTarget: { value: val}}, idx)
                 } else if (localStorage.cnType == 'cv') {
                     getBdAcc(idx, (idx, acc)=>{
@@ -509,93 +583,110 @@
                             if (result.result && result.result[0]) {
                                 let val = result.result[0].keyword;
                                 cnInput.value = val;
+                                window.configList[idx]['cn'] = val;
                                 console.log('idx a', idx)
                                 a({ currentTarget: { value: val }}, idx)
                             }
                         })
                     })
                 }
-                makeImg(idx+1);
                 console.log('over')
             }
         }
-        var a = (ev, idx=window.imgList.length-1) => {
-            console.log('a', idx,  ev.currentTarget.value);
+        var a = (ev, idx) => {
+            if (idx == undefined) idx = window.tarIdx;
+            if (idx == undefined) idx = window.imgList.length-1;
             setTimeout(() => {
-                const {
-                    _x,
-                    _y,
-                    _yy,
-                    fontSize1,
-                    fontSize2,
-                    font1Top,
-                    font2Top,
-                    font1Height,
-                    font2Height
-                } = window.configList[idx];
-                const ctx = window.ctxList[idx];
-                let value = ev.currentTarget.value;
-                if (!value) return;
-                let fontSize = fontSize1;
-                ctx.font = `normal ${fontSize}px fzqy`;// normal 改成 bold 会造成叠影
-                ctx.fillStyle = 'white'
-                //横排文字
-                ctx.fillRect(0, font1Top - fontSize1, _x, font1Height)
-                console.log(0, font1Top, _x, font1Height)
-                ctx.fillStyle = 'black'
-                ctx.textAlign = 'center'
-                ctx.fillText(value, _x / 2, font1Top);
-                console.log(value, _x / 2, font1Top)
-                addCardBg(ctx, idx)
-                convertCanvasToImage(ctx.canvas, idx)
+                let val = ev.currentTarget.value;
+                console.log('a', idx, val);
+                window.configList[idx]['cn'] = val;
+                showCnText(idx, val)
                 // 改中文的时候 查一下英文是什么
-                send3(idx, value, (idx, result) => {
-                    let val;
+                send3(idx, val, (idx, result) => {
+                    let enVal;
                     result = result.info;
                     if (result.translateResult && result.translateResult[0] && result.translateResult[0][0]) {
-                        val = result.translateResult[0][0].tgt;
+                        enVal = result.translateResult[0][0].tgt;
                     } else {
-                        val = 'Find Nothing';
+                        enVal = 'Find Nothing';
                     }
-                    enInput.value = val;
-                    b({ currentTarget: { value: val }}, idx)
+                    enInput.value = enVal;
+                    window.configList[idx]['en'] = enVal;
+                    b({ currentTarget: { value: enVal }}, idx)
                 })
             }, 200)
         }
-        var b = (ev, idx=window.imgList.length-1) => {
+        function showCnText(idx, val) {
+            const {
+                _x,
+                _y,
+                _yy,
+                fontSize1,
+                fontSize2,
+                font1Top,
+                font2Top,
+                font1Height,
+                font2Height
+            } = window.configList[idx];
+            const ctx = window.ctxList[idx];
+            let value = val;
+            if (!value) return;
+            let fontSize = fontSize1;
+            ctx.font = `normal ${fontSize}px fzqy`;// normal 改成 bold 会造成叠影
+            ctx.fillStyle = 'white'
+            //横排文字
+            ctx.fillRect(0, font1Top - fontSize1, _x, font1Height)
+            console.log(0, font1Top, _x, font1Height)
+            ctx.fillStyle = 'black'
+            ctx.textAlign = 'center'
+            ctx.fillText(value, _x / 2, font1Top);
+            console.log(value, _x / 2, font1Top)
+            addCardBg(ctx, idx)
+            convertCanvasToImage(ctx.canvas, idx)
+        }
+        var b = (ev, idx) => {
+            if (idx == undefined) idx = window.tarIdx;
+            if (idx == undefined) idx = window.imgList.length-1;
             setTimeout(() => {
-                const {
-                    _x,
-                    _y,
-                    _yy,
-                    fontSize1,
-                    fontSize2,
-                    font1Top,
-                    font2Top,
-                    font1Height,
-                    font2Height
-                } = window.configList[idx];
-                const ctx = window.ctxList[idx];
-                let value = ev.currentTarget.value;
-                if (!value) return;
-                let fontSize = fontSize2;
-                ctx.font = `normal ${fontSize}px 微软雅黑`;
-                ctx.fillStyle = 'white'
-                //横排文字
-                ctx.fillRect(0, font2Top - fontSize2, _x, font2Height)
-                ctx.fillStyle = 'black'
-                ctx.textAlign = 'center'
-                ctx.fillText(value, _x / 2, font2Top);
-                addCardBg(ctx, idx)
-                convertCanvasToImage(ctx.canvas, idx)
+                let val = ev.currentTarget.value;
+                window.configList[idx]['en'] = val;
+                showEnText(idx, val)
                 mixImg()
             }, 200)
         }
+        function showEnText(idx, val) {
+            const {
+                _x,
+                _y,
+                _yy,
+                fontSize1,
+                fontSize2,
+                font1Top,
+                font2Top,
+                font1Height,
+                font2Height
+            } = window.configList[idx];
+            const ctx = window.ctxList[idx];
+            let value = val;
+            if (!value) return;
+            let fontSize = fontSize2;
+            ctx.font = `normal ${fontSize}px 微软雅黑`;
+            ctx.fillStyle = 'white'
+            //横排文字
+            ctx.fillRect(0, font2Top - fontSize2, _x, font2Height)
+            ctx.fillStyle = 'black'
+            ctx.textAlign = 'center'
+            ctx.fillText(value, _x / 2, font2Top);
+            addCardBg(ctx, idx)
+            convertCanvasToImage(ctx.canvas, idx)
+        }
         // $("#enInput").click(b);
         // $("#enInput").keydown(b);
+        $("#enInput").keydown(b);
         $("#enInput").change(b);
         // $("#cnInput").click(a);
         // $("#cnInput").keydown(a);
+        $("#cnInput").keydown(a);
         $("#cnInput").change(a);
 
 
@@ -623,7 +714,6 @@
             // console.log('tw', tw, ' : ', 'th', th)
             // console.log('x', x, ' : ', 'y', y)
             // console.log('w', w, ' : ', 'h', h)
-            // console.log(ev);
             if (isDown && (lastChangeTs < new Date().getTime() + 0.5 * 1000) && (ev.buttons != undefined ? (ev.buttons == 1 ? true : false) : true)) {
                 lastChangeTs = new Date().getTime();
                 console.log(ev.offsetX, lastX, ev.offsetX - lastX, ev.offsetY - lastY)
@@ -811,7 +901,7 @@
             const xhr = new XMLHttpRequest()
             xhr.onreadystatechange = function (ev) {
                 console.log(ev)
-                if (ev.currentTarget.readyState === 4) {
+                if (ev.currentTarget.readyState === 4 && ev.currentTarget.status === 200) {
                     cb && cb(idx, JSON.parse(ev.currentTarget.response))
                 }
             }
@@ -844,6 +934,34 @@
             // let imgTranser = document.getElementById('img-transer');
             // let ctx = imgTranser.getContext('2d');
             return convertImageToCanvas(img, ctx).toDataURL("image/png")
+        }
+        var canvasOut = document.getElementById('canvas-out')
+        canvasOut.onclick = function(ev) {
+            console.log(ev)
+            let l = ev.offsetX;
+            let t = ev.offsetY;
+            let w = ev.target.width;
+            let h = ev.target.height;
+            let imageCount = window.imgList.length;
+            let xIdx;
+            let yIdx;
+            if (imageCount < 4) {
+                xIdx = (l * imageCount / w) | 0;
+                yIdx = 0;
+            } else {
+                let imageHCount = Math.ceil(imageCount / 4);
+                xIdx = (l * 4 / w) | 0;
+                yIdx = (t * imageHCount / h) | 0;
+            }
+            console.log(xIdx, yIdx);
+            selectImg(xIdx + yIdx * 4);
+        }
+        function selectImg(idx) {
+            cnInput.value = window.configList[idx]['cn'] || '';
+            enInput.value = window.configList[idx]['en'] || '';
+            let file = window.inImgList[idx];
+            window.tarIdx = idx;
+            document.getElementById('topImg').src = window.URL.createObjectURL(file);
         }
     </script>
 
