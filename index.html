@@ -136,18 +136,21 @@
 
         @media (max-width: 768px) {
             .pc-box {
-                display: none;
+                display: none !important;
             }
             .pic-contrl {
                 display: none;
             }
 
             .canvas-out {
-                display: inline-block;
+                /* display: inline-block; */
                 /* width: 236px; */
-                width: auto !important;
-                height: 300px !important;
+                /* width: auto !important;
+                height: 300px !important; */
                 max-width: 100%;
+            }
+            .container.upload {
+                margin-top: -30px;
             }
         }
         @media (min-width: 768px) {
@@ -200,6 +203,12 @@
             font-size: 20px;
         }
     </style>
+    <script>
+        localStorage.cnType = 'name' // cv|name
+        if (window.screen.width < 768) {
+            localStorage.cnType = 'cv'
+        }
+    </script>
 </head>
 
 <body>
@@ -360,20 +369,28 @@
                         const cvs = document.createElement('canvas');
                         let imgWCount = imgCount < 4 ? imgCount : 4;
                         let imgHCount = Math.ceil(imgCount / 4);
-                        cvs.width = imgW * imgWCount * 1.1 + 0.1 * imgW;
-                        cvs.height = imgH * imgHCount * 1.1 + 0.1 * imgH;
+                        cvs.width = imgW * imgWCount * 1.2 - 0.2 * imgW;
+                        cvs.height = imgH * imgHCount * 1.02 - 0.02 * imgH;
                         const ctx = cvs.getContext('2d');
                         for (let j = 0; j < imgCount; j++) {
                             const _img = imgBox[j];
                             console.log(_img)
-                            ctx.drawImage(_img, 0, 0, _img.width, _img.height, (j % 4) * imgW * 1.1 + 0.1 * imgW, (j/4|0) * imgH * 1.1 + 0.1 * imgH, imgW, imgH);
+                            ctx.drawImage(_img, 0, 0, _img.width, _img.height, (j % 4) * imgW * 1.2, (j/4|0) * imgH * 1.02, imgW, imgH);
                         }
                         let _url = cvs.toDataURL("image/png");
                         var image = document.getElementById('canvas-out')
                         image.src = _url;
                         image.style.display = 'inline-block';
-                        image.style.width = (imgWCount * 1.1 + 0.1) * 231 + 'px';
-                        image.style.height = (imgHCount * 1.1 + 0.1) * 330 + 'px';
+                        image.style.width = (imgWCount * 1.2 - 0.2) * 231 + 'px';
+                        image.style.height = 'auto';// (imgHCount * 1.02 - 0.02) * 330 + 'px';
+
+                        if (document.body.offsetWidth < 768) {
+                            if (imgCount == 1) {
+                                image.style.width = parseInt(image.style.width) / 1.5 + 'px';
+                            } else if (imgCount < 3) {
+                                image.style.width = parseInt(image.style.width) / 2 + 'px';
+                            }
+                        }
                         
                         document.getElementById('pc-img-count').innerText = imgCount;
                         document.getElementById('success-tips').style.display = 'block';
@@ -481,17 +498,23 @@
                 _url = _url.substr(22); // 用_url = _url.replace(/.*base64\,/g,'') 在加网络请求会卡死 不知道为什么
                 if (_url[0] == ',') _url = _url.substr(1);
                 // console.log(_url)
-                getBdAcc(idx, (idx, acc)=>{
-                    send2(idx, _url, (idx, result) => {
-                        console.log(result)
-                        if (result.result && result.result[0]) {
-                            let val = result.result[0].keyword;
-                            cnInput.value = val;
-                            console.log('idx a', idx)
-                            a({ currentTarget: { value: val }}, idx)
-                        }
+                if (localStorage.cnType == 'name') {
+                    let val = window.inImgList[idx].name.replace(/\..*/, '');
+                    cnInput.value = val;
+                    a({ currentTarget: { value: val}}, idx)
+                } else if (localStorage.cnType == 'cv') {
+                    getBdAcc(idx, (idx, acc)=>{
+                        send2(idx, _url, (idx, result) => {
+                            console.log(result)
+                            if (result.result && result.result[0]) {
+                                let val = result.result[0].keyword;
+                                cnInput.value = val;
+                                console.log('idx a', idx)
+                                a({ currentTarget: { value: val }}, idx)
+                            }
+                        })
                     })
-                })
+                }
                 makeImg(idx+1);
                 console.log('over')
             }
